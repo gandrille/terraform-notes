@@ -1,0 +1,48 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-26T16:00:11+02:00
+
+====== 09. Backends ======
+A [[https://developer.hashicorp.com/terraform/language/settings/backends/configuration|backend]] defines where Terraform stores its state data files (''terraform.tfstate''). By default, the local backend is used... but it does not allow collaboration between users. A few backends are available out of the box : S3, PostgreSQL, Consul, Kubernetes,...
+The local backend stores state on the local filesystem, locks that state using system APIs, and performs operations locally. By default, Terraform uses the "local" backend.
+When configuring a backend for the first time (moving from no defined backend to explicitly configuring one), Terraform will give you the option to migrate your state to the new backend.
+
+
+===== S3 backend =====
+[[https://developer.hashicorp.com/terraform/language/settings/backends/s3|S3 backend]] is one of the most popular backends.
+
+'''
+terraform {
+  backend "s3" {
+    bucket = "mybucket"
+    key    = "path/to/my/key"
+    region = "eu-west-1"
+  }
+}
+'''
+
+**Important**
+* By default, S3 does not support State Locking functionality.
+* You need to make use of a DynamoDB table to achieve state locking functionality.
+{{./s3-backend.png?width=640}}
+
+===== External backend configuration =====
+'''
+terraform {
+  backend "consul" {}
+}
+'''
+
+'''
+terraform init \
+  -backend-config="address=demo.consul.io" \
+  -backend-config="path=example_app/terraform_state" \
+  -backend-config="scheme=https"
+'''
+
+
+===== State locking =====
+In real use cases, it is important to prevent concurrent updates on the state to prevent the file from becoming corrupted.
+* If state locking fails, Terraform will not continue
+* Not all backends support locking. The documentation for each backend includes details on whether it supports locking or not.
+* Failure recovery (use it at your own risks!) ''terraform force-unlock'' manually unlock the state.

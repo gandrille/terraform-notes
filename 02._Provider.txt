@@ -1,0 +1,107 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-27T16:35:17+02:00
+
+====== 02. Provider ======
+**Plugins**
+* Plugins are executable binaries written in Go that communicate with Terraform Core over an RPC interface. **Terraform currently supports only one type of plugin called providers.**
+* Plugins are stored inside ''.terraform'' folder
+
+**Introduction**
+A provider is responsible for understanding API interactions and exposing resources.
+Most of the available providers correspond to one cloud or on-premises infrastructure platform, and offer resource types that correspond to each of the features of that platform. You can explicitly set a specific version of the provider within the provider block.
+To upgrade to the latest acceptable version of each provider, run ''terraform init -upgrade''
+
+Each Terraform module must declare which providers it requires, so that Terraform can install and use them. Provider requirements are declared in a ''required_providers block''.
+
+**Version definition**
+* ''version = "2.7"''
+* ''version = ">= 2.8"''
+* ''version = "<= 2.8"''
+* ''version = ">=2.10,<=2.30"''
+* ''version = "~> 2.0"''
+
+
+===== Example 1: AWS provider usage =====
+'''
+# terraform settings: no variable can be used inside this block
+terraform {
+  # if needed
+  required_version = "> 0.12.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "eu-west-1"
+}
+
+resource "aws_instance" "myec2" {
+  ami           = "ami-00c39f71452c08778"
+  instance_type = "t2.micro"
+}
+'''
+
+
+===== Example 2: Vault provider usage =====
+'''
+provider "vault" {
+  address = "http://127.0.0.1:8200"
+}
+
+data "vault_generic_secret" "demo" {
+  path = "secret/db_creds"
+}
+
+output "vault_secrets" {
+  value     = data.vault_generic_secret.demo.data_json
+  sensitive = "true"
+}
+'''
+
+
+===== Versions management =====
+See: [[https://developer.hashicorp.com/terraform/language/files/dependency-lock|Dependency lock file]] - [[https://developer.hashicorp.com/terraform/tutorials/configuration-language/provider-versioning|Tutorial]]
+
+''terraform init'' installs providers
+* With releases matching the one registered inside ''.terraform.lock.hcl'' file
+* Or with the release matching constraints. Then, the installed release is registered inside ''.terraform.lock.hcl''
+→ sharing ''.terraform.lock.hcl'' inside git ensure everyone is using the same provider releases.
+
+Note
+* ''terraform init -upgrade'' installs the latest provider releases that are matching constraints, ignoring ''.terraform.lock.hcl''
+* ''.terraform.lock.hcl'' is NOT used for locking the state
+
+
+===== Multiple provider configurations =====
+See: [[https://developer.hashicorp.com/terraform/language/providers/configuration#alias-multiple-provider-configurations|alias: Multiple Provider Configurations]]
+
+'''
+# A provider block without an alias argument is the default configuration for that provider.
+provider "aws" {
+  region = "eu-west-1"
+}
+
+provider "aws" {
+  alias  = "backup_region"
+  region = "eu-west-2"
+  # for having different credentials
+  profile = "disaster_reco"
+}
+
+resource "aws_instance" "main_ec2" {
+  ami           = "ami-00c39f71452c08778"
+  instance_type = "t2.micro"
+}
+
+resource "aws_instance" "backup_ec2" {
+  provider      = "aws.backup_region"
+  ami           = "ami-00c39f71452c08778"
+  instance_type = "t2.micro"
+}
+'''

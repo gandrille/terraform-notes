@@ -1,0 +1,122 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-17T15:46:37+02:00
+
+====== 01. CLI usage ======
+===== ''terraform init'' =====
+* The terraform init command is used to initialize a working directory containing Terraform configuration files.
+* Plugins (Providers) code is downloaded inside ''.terraform/'' and ''.terraform.lock.hcl'' is used or updated
+* Modules code is downloaded
+* It will NOT create any sample files like ''example.tf''
+* ''-upgrade'' install the latest module and provider versions allowed within configured constraints, overriding the default behavior of selecting exactly the version recorded in the dependency lockfile.
+
+
+===== ''terraform validate'' =====
+The ''terraform validate'' command validates the configuration files in a directory.
+Validate runs checks whether a configuration is syntactically valid including the correctness of attribute names and value types.
+It is safe to run this command automatically, for example, as a post-save check in a text editor or as a test step for a reusable module in a CI system. It can run before a terraform plan.
+→ Validation requires an initialized working directory with any referenced plugins and modules installed
+
+
+===== ''terraform plan'' =====
+* The terraform plan command is used to create an execution plan.
+* It will NOT modify things in infrastructure.
+* Terraform performs a ''refresh'', unless explicitly disabled (''-refresh=false''), and then determines what actions are necessary to achieve the desired state specified in the configuration files.
+→ This command is a convenient way to check whether the execution plan for a set of changes matches your expectations without making any changes to real resources or to the state (for instance with a PR).
+
+
+===== ''terraform apply'' =====
+The terraform apply command is used to apply the changes required to reach the desired state of the configuration.
+Terraform apply will also write data to the ''terraform.tfstate'' file.
+Once apply is completed, resources are immediately available.
+
+''terraform apply -auto-approve''
+
+**Safer apply**
+* ''terraform plan -out=demopath''
+* ''terraform apply demopath''
+
+Note : Terraform uses Parallelism to reduce the time it takes to create the resource. By default, this value is set to 10
+
+
+===== ''terraform destroy'' =====
+Used to destroy the Terraform-managed infrastructure.
+''terraform destroy -auto-approve''
+→ ''terraform destroy'' command is not the only command through which infrastructure can be
+destroyed. For instance, removing a resource and performing an apply...
+
+
+===== ''terraform state'' =====
+* ''terraform state list'' List resources within a Terraform state
+* ''terraform state show <resource>'' Show the attributes of a single resource in the Terraform state.
+* ''terraform state pull'' Manually download and output the state from remote state. This is useful for reading values out of state (potentially pairing this command with something like jq).
+* ''terraform state push'' Update remote state from a local state file
+* ''terraform state mv'' Rename the id used by terraform to reference an infrastructure element (prevents destroy / recreate)
+* ''terraform state rm'' Remove instance from the state (forget that an existing resource is managed by terraform)
+
+
+===== ''terraform output'' =====
+The ''terraform output'' command is used to extract the value of an output variable from the state file.
+''terraform output myvar''
+
+
+===== ''terraform graph'' =====
+''terraform graph > graph.dot''
+''cat graph.dot | dot -Tsvg > graph.svg''
+→ ''dot'' executable is installed using the ''graphviz'' package
+
+
+===== ''terraform fmt'' =====
+The ''terraform fmt'' command is used to rewrite Terraform configuration files to a canonical format and style.
+For use-case, where the all configuration written by team members needs to have a proper style of code, ''terraform fmt'' can be used.
+
+
+===== ''terraform refresh'' =====
+The ''terraform refresh'' command is used to reconcile the state Terraform knows about (via its state file) with the real-world infrastructure. This does not modify infrastructure but does modify the state file.
+
+* ''resfreh'' is executed implictly during ''plan'', ''apply'', ''destroy''.
+* Others like terraform ''init'', ''import'' do not run ''refresh'' implictly.
+
+
+===== Tfstate best practices =====
+1. keep it secured!!! It's a FULL description of the infra and it contains a LOT of secrets, even if they are flaged as sensitive.
+2. Use a backend
+
+
+===== Troubleshooting and large infrastructures =====
+**Output**
+Terraform output can show an output recorded inside the state.
+IMPORTANT: output must be defined inside the tf file to be part of the state !
+
+'''
+# inside the tf file
+output "arns" {
+  value = aws_instance.myec2[*].arn
+}
+'''
+
+Then ''terraform output arns''
+
+**Don't refresh state. This is a hack when the infra is huge**
+''terraform plan -refresh=false''
+
+**Plan a specific update**
+''terraform plan -refresh=false -target=aws_security_group.allow_ssh_conn''
+
+**Destroy a specific resource**
+''terraform destroy -target aws_instance.myec2''
+
+**Recreate (replace) a specific resource**
+''terraform apply -replace="aws_instance.web"'' # see also: taint
+
+
+===== Debug =====
+You can set ''TF_LOG'' to one of the log levels ''TRACE'', ''DEBUG'', ''INFO'', ''WARN'' or ''ERROR'' to change the verbosity of the logs.
+''export TF_LOG=TRACE''
+''export TF_LOG_PATH=/tmp/crash.log''
+
+
+===== Comments =====
+''# Standard single line comment''
+''// single line C style comment. Prefer #''
+[[/*|''/*'']] ''multiline C style comment */''

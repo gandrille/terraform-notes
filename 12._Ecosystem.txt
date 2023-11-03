@@ -1,0 +1,28 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-25T10:04:05+02:00
+
+====== 12. Ecosystem ======
+===== Gitignore =====
+https://github.com/github/gitignore/blob/main/Terraform.gitignore
+* ''terraform.tfstate'' file can include sensitive information
+* ''*.tfvars'' may contain sensitive data like passwords
+
+===== Atlantis =====
+https://www.runatlantis.io
+
+
+===== Terragrunt =====
+Wrapper arround terraform, in order to templetize ''*.tf'' files.
+
+
+===== Misc =====
+* [[https://terraform-docs.io/|terraform-docs]] generate documentation from Terraform modules in various output formats
+* [[https://aquasecurity.github.io/tfsec/|tfsec]] static analysis security scanner for Terraform code.
+* [[https://www.checkov.io/|checkov]] same as tfsec and can scan other type of sources
+* [[https://www.infracost.io/|infracost]] computes the cost impact of infrastructure changes before launching resources.
+
+
+===== Tests =====
+* [[https://terratest.gruntwork.io/|Terratest]]
+* [[https://developer.hashicorp.com/terraform/tutorials/configuration-language/test|Native Terraform Tests]]: requires Terraform v1.6+

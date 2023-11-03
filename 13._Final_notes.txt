@@ -1,0 +1,11 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-11-02T11:39:45+01:00
+
+====== 13. Final notes ======
+This documentation was created in order to prepare HashCorp Terraform certification-003. Knowing all this content should be enough in order to get certified (no guarantee of course, but I was certified in 2023).
+
+**TODO**
+* A dedicated section explaining state in details should be created based on https://developer.hashicorp.com/terraform/language/state
+* For expression should be explained inside [[:03. Variables|Variable]] section
+* [[:11. Terraform Cloud|Terraform Cloud]] section is a bit weak, even if some knowlede is mandatory in order to be certified

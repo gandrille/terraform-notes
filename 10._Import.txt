@@ -1,0 +1,39 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-27T14:54:14+02:00
+
+====== 10. Import ======
+===== BEFORE Terraform 1.5: the CLI =====
+See: [[https://developer.hashicorp.com/terraform/cli/import|import CLI]]
+
+The ''terraform import'' CLI command can only import resources into the state. Importing via the CLI does not generate configuration.
+Before you run ''terraform import'' you must manually write a resource configuration block for the resource. The resource block describes where Terraform should map the imported object.
+
+
+===== WITH Terraform 1.5.0: the import Block =====
+See: [[https://developer.hashicorp.com/terraform/language/import|import block]]
+
+''terraform import'' can create the ''resource.tf'' file from the remote infrastructure element to be imported !
+
+
+**import.tf**
+'''
+provider "aws" {
+  region = "eu-west-1"
+}
+
+# After importing, you can optionally remove import blocks from your configuration
+# or leave them as a record of the resource's origin.
+import {
+  to = aws_security_group.mysg
+  id = "sg-07f13feb262ba8b6f"
+}
+'''
+
+**Command To Autogenerate Code for Imported Resource**
+''terraform plan -generate-config-out=mysg.tf''
+Note : ''-generate-config-out'' flag may change in future releases. See documentation.
+
+**Command To Generate the Final State file**
+''terraform apply -auto-approve''
+

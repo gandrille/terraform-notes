@@ -1,0 +1,129 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-17T15:56:44+02:00
+
+====== 05. Advanced concepts ======
+===== Functions =====
+See: [[https://developer.hashicorp.com/terraform/language/functions|functions]]
+The Terraform language does not support user-defined functions, and so only the functions built into the language are available for use.
+Use ''terraform console'' to try functions!
+
+
+===== Data sources =====
+Data sources allow data to be fetched or computed for use elsewhere in Terraform configuration.
+
+**Example**
+
+'''
+data "aws_ami" "app_ami" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm*"]
+  }
+}
+
+resource "aws_instance" "instance-1" {
+  ami           = data.aws_ami.app_ami.id
+  instance_type = "t2.micro"
+}
+'''
+
+Note: a lot of filters can be used. See [[https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options|ec2 instances]]
+
+**Data sources can be used to connect a state (with its outputs)**
+→ Note using [[https://developer.hashicorp.com/terraform/language/state/remote-state-data|terraform_remote_state]] is too permissive... prefer [[https://registry.terraform.io/providers/hashicorp/tfe/latest/docs/data-sources/outputs|tfe_outputs]] which only gives access to output.
+
+'''
+data "terraform_remote_state" "eip" {
+  backend = "s3"
+
+  config = {
+    bucket = "kplabs-terraform-backend"
+    key    = "network/eip.tfstate"
+    region = "us-east-1"
+  }
+}
+'''
+
+
+===== Dependency =====
+**Implicit**
+'''
+resource "aws_eip" "my_eip"{
+  vpc = "true"
+}
+
+resource "aws_instance" "my_ec2" {
+  instance_type = "t2.micro"
+  public_ip     = aws_eip.myeip.private_ip
+}
+'''
+
+**Explicit**
+Explicitly specifying a dependency is only necessary when a resource relies on some other resource's behavior but doesn't access any of that resource's data in its arguments.
+
+'''
+resource "aws_s3_bucket" "example" {
+  acl = "private"
+}
+
+resource "aws_instance" "myec2" {
+  instance_type = "t2.micro"
+  depends_on    = [aws_s3_bucket.example]
+}
+'''
+
+
+===== Update order =====
+* Create resources that exist in the configuration but are not associated with a real infrastructure object in the state.
+* Destroy resources that exist in the state but no longer exist in the configuration.
+* Update in-place resources whose arguments have changed.  → for instance EC2 tags
+* Destroy and re-create resources whose arguments have changed but which cannot be updated in-place due to remote API limitations. → for instance EC2 AMI
+
+
+===== Lifecycle meta argument =====
+**''create_before_destroy''**
+By default, resources are destroyed and then created.
+With ''create_before_destroy = true'', the new replacement object is created first, and the prior object is destroyed after the replacement is created. 
+→ Great to always have resources up on prod.
+
+**''prevent_destroy''**
+Prevents resources from being destroyed with ''terraform destroy''
+→ Great for databases, S3 buckets,... use ''prevent_destroy = true'' to enable
+**VERY IMPORTANT:** if the entire resource definition is removed from the terraform file, IT WILL BE DESTROYED.
+
+**''ignore_changes''**
+Ignore certain changes to the live resource that does not match the configuration.
+* ''ignore_changes = [arg1, arg2]''
+* ''ignore_changes = all'' → does what it say! 
+
+'''
+resource "aws_instance" "myec2" {
+  ami           = "ami-00c39f71452c08778"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "Hello world"
+  }
+
+  # ignore changes on tags !
+  lifecycle {
+    ignore_changes = [tags]
+  }
+}
+'''
+
+**''replace_triggered_by''**
+Replaces the resource when any of the referenced items change
+
+
+===== Taint =====
+A resource can be taint. This means that it will be recreated during the next apply.
+* Explicit taint: ''terraform taint aws_instance.my_instance''
+* Implicit taint: if a local exec or remote exec fails
+
+''terraform taint'' can also be used to taint resources within a module.
+''terraform taint module.couchbase.aws_instance.my_instance''
+

@@ -1,0 +1,22 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-27T17:54:29+02:00
+
+====== 11. Terraform Cloud ======
+https://www.hashicorp.com/cloud
+* Supported OS: everything except Unix and Android
+* VCS providers: GitHub, BitBucket, Azure DevOps server, Azure DevOps services
+
+**Workspace management**
+* NOT the same as the open source flavor
+* Integration with GIT repositories
+* Automatic plan on commit (and one click apply!)
+* Variables management
+
+**Sentinel**
+Sentinel is an embedded policy-as-code framework
+* Policy controls to make apply fail
+* Only available with paid plans!
+→ IMPORTANT: policies are only enforced at Terraform Cloud level... we still can do what we want on AWS directly...
+
+{{./plans.drawio.png}}

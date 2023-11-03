@@ -1,0 +1,22 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-27T18:02:56+02:00
+
+====== 00. References ======
+**Installation**
+* [[https://developer.hashicorp.com/terraform/downloads|Downloads]]
+* [[https://github.com/tfutils/tfenv|tfenv]]
+* [[https://tfswitch.warrensbox.com/|TFSwitch]]
+
+**IPPON**
+* [[https://docs.google.com/presentation/d/15rp8x7AwInLqRmCDeEGaHGgy_c1O8x3QKz3LGayYzrQ/edit#slide=id.g5c4af6a83e_0_0|Old slides]]
+* [[https://docs.google.com/presentation/d/1iJ2PqyNM4PC8NY18nJL1z1clbf9ij6Heal_VUVlI6oM/edit#slide=id.p|New slides]]
+* [[https://github.com/ippontech/terraform-base-template|GitHub: Terraform base template]]
+
+**Udemy**
+* [[https://www.udemy.com/course/terraform-beginner-to-advanced/learn/|Great course]] - [[https://github.com/zealvora/terraform-beginner-to-advanced-resource|GitHub]] - http://kplabs.in/chat → ''#terraform-associate'' channel on slack
+* [[https://www.udemy.com/course/terraform-associate-practice-exam/|Dedicated exam questions pack]]
+
+**HashiCorp certification**
+* https://www.hashicorp.com/certification/terraform-associate
+* https://developer.hashicorp.com/terraform/tutorials/certification-003

@@ -1,0 +1,21 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-26T15:00:11+02:00
+
+====== 08. Workspaces ======
+See: [[https://developer.hashicorp.com/terraform/language/state/workspaces|Workspaces]]
+
+Workspaces allow multiple state files of a single configuration. Most of the time, each workspace has a different set of environment variables associated.
+Not suitable for isolation for strong separation between workspace (stage/prod)
+→ One codebase, several environments (dev1, dev2,...)
+→ State File Directory: ''terraform.tfstate.d/dev1'', ''terraform.tfstate.d/dev2'',...
+
+**Commands**
+* ''terraform workspace new'' Create a new workspace
+* ''terraform workspace list'' List Workspaces
+* ''terraform workspace select'' Select a workspace
+* ''terraform workspace show'' Show the name of the current workspace
+* ''terraform workspace delete'' Delete a workspace. The ''default'' workspace can NOT be deleted.
+
+→ Variable ''${terraform.workspace}''
+

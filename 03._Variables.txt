@@ -1,0 +1,231 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.6
+Creation-Date: 2023-10-25T11:38:27+02:00
+
+====== 03. Variables ======
+===== Variables =====
+'''
+variable "image_id" {
+  type        = string
+  description = "Image ID to use when creating an instance"
+  default     = "id-xxxx"
+  sensitive   = false
+  nullable    = false
+
+  validation {
+    condition     = length(var.image_id) > 3 && substr(var.image_id, 0, 3) == "id-"
+    error_message = "The image_id value must be a valid Image id, starting with \"id-\"."
+  }
+}
+'''
+
+Terraform CLI defines the following optional arguments for variable declarations:
+* ''type'' This argument specifies what value types are accepted for the variable.
+	* ''string''
+	* ''number''
+	* ''bool'': can be ''true'' or ''false''
+	* ''list'': for instance, ''type = list(string)''
+	* ''map''
+* ''default'' A default value which then makes the variable optional.
+* ''description'' This specifies the input variable's documentation.
+* ''validation'' A block to define validation rules, usually in addition to type constraints.
+* ''sensitive'' Limits Terraform UI output when the variable is used in configuration. **IMPORTANT: the variable remains plain text readable inside the state.**
+* ''nullable'' Specify if the variable can be ''null'' within the module.
+
+**Examples**
+
+'''
+# this is valid!
+variable "image_id" {}
+'''
+
+'''
+variable "image_id" {
+  type = string
+}
+'''
+
+'''
+variable "availability_zone_names" {
+  type    = list(string)
+  default = ["us-west-1a"]
+}
+'''
+
+'''
+variable "docker_ports" {
+  type = list(object({
+    internal = number
+    external = number
+    protocol = string
+  }))
+  default = [
+    {
+      internal = 8300
+      external = 8300
+      protocol = "tcp"
+    }
+  ]
+}
+'''
+
+
+===== Reference attributes =====
+'''
+resource "aws_eip" "lb" {
+  domain = "vpc"
+}
+
+resource "aws_security_group" "allow_tls" {
+  name        = "allow_tls"
+  description = "Allow TLS inbound traffic"
+
+  ingress {
+    description = "TLS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["${aws_eip.lb.public_ip}/32"]
+  }
+}
+'''
+
+**Syntax**
+* ''<resourcetype>.<resourcename>.<attribute>''
+* ''data.<name>''
+* ''var.<name>''
+* ''local.<name>''
+* ''module.<instancename>.<outputname>''
+
+===== Output values =====
+**They can be used to**
+* Display information
+* Register data inside the state
+* Send information back to a caller module
+
+'''
+output "public_url" {
+  value = "https://${aws_eip.lb.public_ip}:8080"
+}
+'''
+
+**Output can be referenced from a caller module**
+
+'''
+# Here, we are in the root module
+module "my_endpoint" {
+  source = ../module/endpoint
+}
+
+# module.my_endpoint.public_url
+'''
+
+
+===== Ordre des précédance des variables =====
+1. Default values
+2. Environnement ''export TF_VAR_str="env"'' → defines str=env
+3. ''terraform.tfvars'' file with lines such as ''key=value''
+4. ''terraform.tfvars.json'' file
+5. ''*.auto.tfvars'' and ''*.auto.tfvars.json'' files
+6. CLI using ''-var'' or ''-var-file''
+
+→ Storing credentials as part of environment variables is also a much better approach than hard coding it in the source files.
+
+
+===== Basic map usage =====
+'''
+resource "aws_instance" "myec2" {
+  ami           = "ami-082b5a644766e0e6f"
+  instance_type = var.types["us-west-2"]
+}
+
+variable "types" {
+  type = map(any)
+  default = {
+    us-east-1  = "t2.micro"
+    us-west-2  = "t2.nano"
+    ap-south-1 = "t2.small"
+  }
+}
+'''
+
+**Access**
+* ''var.my_map.my_key''
+* ''var.my_map["my_key"]''
+* ''lookup(var.my_map, "my_key", <default_value>)''
+→ Note: access using zero based index is NOT possible.
+
+**Map**
+* [[https://developer.hashicorp.com/terraform/language/functions/merge|merge]] takes an arbitrary number of maps or objects, and returns a single map or object that contains a merged set of elements from all arguments.
+* [[https://developer.hashicorp.com/terraform/language/functions/lookup|lookup]] retrieves the value of a single element from a map, given its key. If the given key does not exist, the given default value is returned instead.
+
+
+===== Basic list usage =====
+''list(...)'': a sequence of values identified by consecutive whole numbers starting with zero. The keyword ''list'' is a shorthand for ''list(any)'', which accepts any element type as long as every element is **the same type**.
+
+'''
+resource "aws_instance" "myec2" {
+  ami           = "ami-082b5a644766e0e6f"
+  instance_type = var.list[0]
+}
+'''
+
+'''
+variable "list" {
+  type    = list(string)
+  default = ["m5.large", "m5.xlarge", "t2.medium"]
+}
+'''
+
+**Access**
+* ''var.my_list[<index>]''
+* ''element(var.my_list, <index>)''
+
+**Key functions**
+* [[https://developer.hashicorp.com/terraform/language/functions/concat|concat]] takes two or more lists and combines them into a single list.
+* [[https://developer.hashicorp.com/terraform/language/functions/contains|contains]] determines whether a given list or set contains a given single value as one of its elements.
+* [[https://developer.hashicorp.com/terraform/language/functions/formatlist|formatlist]] produces a list of strings using a string template and a list of variables
+* [[https://developer.hashicorp.com/terraform/language/functions/index_function|index]] finds the element index for a given value in a list.
+
+
+===== list + list → map : use zipmap ! =====
+See: [[https://developer.hashicorp.com/terraform/language/functions/zipmap|zipmap]]
+
+'''
+zipmap(["a", "b"], [1, 2])
+{
+  "a" = 1
+  "b" = 2
+}
+'''
+
+
+===== Local Values =====
+Constants that are defined within a module.
+Local values can be helpful to avoid repeating the same values or expressions multiple times in a configuration.
+
+'''
+locals {
+  common_tags = {
+    Owner   = "DevOps Team"
+    service = "backend"
+  }
+}
+resource "aws_instance" "app-dev" {
+  ami           = "ami-082b5a644766e0e6f"
+  instance_type = "t2.micro"
+  tags          = local.common_tags
+}
+'''
+
+Locals can help defining helpers
+'''
+locals {
+  name_prefix = "${var.name != "" ? var.name : var.default_name}"
+}
+'''
+
+
+===== For expression =====
+See [[https://developer.hashicorp.com/terraform/language/expressions/for|documentation]]
+Have a deep look at it since there are questions on the exam about this statement.
