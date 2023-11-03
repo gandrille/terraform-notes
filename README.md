@@ -1,4 +1,4 @@
-# Terraform notes
+# 🏗️ Terraform notes
 
 Here are personal notes I have written while preparing [HashiCorp Terraform Associate (003) certification](https://www.hashicorp.com/certification/terraform-associate).
 
