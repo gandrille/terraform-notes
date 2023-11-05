@@ -67,7 +67,7 @@ jobs:
           repository: 'gandrille/zim-simple-latex-template'
           path: 'zim-simple-latex-template'
 
-      - name: Generate Latex sources
+      - name: Generate latex sources
         if: ${{ env.GENERATE_PDF == 'true' }}
         run: mkdir ./latex && zim --export --format latex --output ./latex/notebook.tex --template ./zim-simple-latex-template/Template.tex --overwrite --singlefile ./source/notebook.zim
 
@@ -75,11 +75,11 @@ jobs:
         if: ${{ env.GENERATE_PDF == 'true' }}
         run: sudo apt install --yes texlive texlive-latex-extra
       
-      - name: Build pdf from Latex
+      - name: Build pdf from latex
         if: ${{ env.GENERATE_PDF == 'true' }}
         run: pdflatex -halt-on-error -output-directory latex ./latex/notebook.tex && pdflatex -halt-on-error -output-directory latex ./latex/notebook.tex && mv ./latex/notebook.pdf ./pages/${GITHUB_REPOSITORY##*/}.pdf && echo "Rename notebook.pdf => ${GITHUB_REPOSITORY##*/}.pdf"
 
-      - name: Patch index.html in order to reference pdf file
+      - name: Patch intex in order to reference pdf file
         if: ${{ env.GENERATE_PDF == 'true' }}
         run: sed -i "s|</body>|<script type=\"text/javascript\">\$(\"#content\").append(\"<div><a href='https://${GITHUB_REPOSITORY%%/*}.github.io/${GITHUB_REPOSITORY##*/}/${GITHUB_REPOSITORY##*/}.pdf'>Full content exported as a pdf file.</a></div>\")</script>\n</body>|" ./pages/index.html
 
